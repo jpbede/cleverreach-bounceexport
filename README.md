@@ -4,13 +4,13 @@ Little go tool to export bounces as CSV from CleverReach.
 It uses the CleverReach REST API v3.
 
 # How to use
-Create a OAUth app at https://eu.cleverreach.com/admin/account_rest.php
+Create a OAuth app at https://eu.cleverreach.com/admin/account_rest.php
 
 Then call the tool as following:
 
 ```cleverreach-bounceexport --oauth_id <your oauth client id> --oauth_secret <your oauth client secret>```
 
-The tool always exports the bounces of the account to which the OAuth app belongs. 
+The tool always exports, by default, the bounces of the account to which the OAuth app belongs. 
 
 #### Debug
 If you want a log with a bit more infos, just append ```--debug```
