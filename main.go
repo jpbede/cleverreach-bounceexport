@@ -4,14 +4,11 @@ import (
 	"bufio"
 	"context"
 	"encoding/csv"
-	"errors"
-	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/gocarina/gocsv"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -42,33 +39,29 @@ func main() {
 		ClientSecret: *oauthSecret,
 		TokenURL:     "https://rest.cleverreach.com/oauth/token.php",
 	}
+	client := resty.NewWithClient(config.Client(ctx))
 
-	tk, err := config.Token(ctx)
-	if err != nil {
-		HandleError(err)
-	}
-	log.Info("Got token for account")
-	token := tk.AccessToken
-
+	hasSubAccountToken := false
 	// do we want the bounces of a sub-account of us ?
 	if *clientID != "none" {
 		log.Debugf("Impersonating client %s", *clientID)
 
-		client := resty.NewWithClient(config.Client(ctx))
-
-		resp, httperr := client.R().
-			SetHeader("Accept", "application/json").
-			SetHeader("Content-Type", "application/json").
-			Get(fmt.Sprintf("https://rest.cleverreach.com/v3/clients/%s/token", *clientID))
-		if httperr != nil {
-			HandleError(httperr)
-		}
-		if resp.StatusCode() == 200 {
-			token = strings.Trim(string(resp.Body()), "\"")
+		subAccountToken, impersonatingErr := GetTokenForAccount(*clientID, client)
+		if impersonatingErr == nil && subAccountToken != "" {
 			log.Infof("Got token for client ID %s", *clientID)
+
+			if err := InvalidateToken(client); err != nil {
+				log.Errorf("Error invalidating agency token: %s", err.Error())
+			} else {
+				log.Debug("Successfully invalidated agency token")
+			}
+
+			// init new client with sub-account token
+			client = resty.New()
+			client.SetAuthToken(subAccountToken)
+			hasSubAccountToken = true
 		} else {
-			log.Debugf("Impersonating response body: %s", string(resp.Body()))
-			HandleError(errors.New(fmt.Sprintf("Impersonating request returned with a none 200 status code: %d", resp.StatusCode())))
+			HandleError(impersonatingErr)
 		}
 	}
 
@@ -76,7 +69,7 @@ func main() {
 	page := 0
 	cnt := 0
 	for {
-		gotBounces, httpErr := GetBounces(page, token)
+		gotBounces, httpErr := GetBounces(page, client)
 
 		if httpErr != nil {
 			HandleError(httpErr)
@@ -89,10 +82,19 @@ func main() {
 		if len(gotBounces) == 500 {
 			page++
 		} else {
-			log.Debug("Page size is below 500, so there are no more bounces. Continuing writing of csv")
+			log.Debug("Page size is below 500, so there are no more bounces.")
 			break
 		}
 	}
-
 	log.Infof("%d bounces written to CSV", cnt)
+
+	// just delete main account tokens
+	// sub-account tokens gotten via API are temporarily
+	if !hasSubAccountToken {
+		if err := InvalidateToken(client); err != nil {
+			log.Errorf("Error invalidating token: %s", err.Error())
+		} else {
+			log.Info("Successfully invalidated token")
+		}
+	}
 }

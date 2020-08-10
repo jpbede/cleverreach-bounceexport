@@ -21,10 +21,7 @@ type Bounce struct {
 	TypeID        string `json:"type_id" csv:"type_id"`
 }
 
-func GetBounces(page int, token string) ([]*Bounce, error) {
-	client := resty.New()
-	client = client.SetAuthToken(token)
-
+func GetBounces(page int, client *resty.Client) ([]*Bounce, error) {
 	resp, httperr := client.R().
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
