@@ -7,7 +7,7 @@ import (
 )
 
 var oauthID = flag.String("oauth_id", "none", "OAuth Client ID")
-var oauthSecret = flag.String("oauth_secret", "none", "OAuth Client ID")
+var oauthSecret = flag.String("oauth_secret", "none", "OAuth Client Secret")
 var clientID = flag.String("client_id", "none", "Desired client id, if not specified it is the client where oauth app belongs to")
 var debug = flag.Bool("debug", false, "Shows debug messages")
 
