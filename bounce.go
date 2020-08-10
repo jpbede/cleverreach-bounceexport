@@ -28,9 +28,12 @@ func GetBounces(page int, token string) ([]*Bounce, error) {
 	resp, httperr := client.R().
 		SetHeader("Accept", "application/json").
 		SetHeader("Content-Type", "application/json").
-		Get(fmt.Sprintf("https://rest.cleverreach.com/v3/bounces?page=%d", page))
+		Get(fmt.Sprintf("https://rest.cleverreach.com/v3/bounces?page=%d&pagesize=500", page))
 	if httperr != nil {
 		return nil, httperr
+	}
+	if resp.StatusCode() != 200 {
+		log.Debugf("Bounce request returned with body %s", string(resp.Body()))
 	}
 	log.Debugf("Bounce request returned with HTTP %d", resp.StatusCode())
 

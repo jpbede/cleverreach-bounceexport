@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/csv"
 	"errors"
@@ -9,13 +10,30 @@ import (
 	"github.com/gocarina/gocsv"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
-	"io"
 	"os"
+	"strings"
 )
 
 func main() {
 	// parse and check cli parameters
 	ParseAndCheckCLIParams()
+
+	// open file for writing
+	fileName := "bounces"
+	if *clientID != "none" {
+		fileName += "_" + *clientID
+	}
+
+	bouncesFile, openErr := os.OpenFile(fileName+".csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if openErr != nil {
+		HandleError(openErr)
+	}
+	defer bouncesFile.Close()
+
+	fileWriter := bufio.NewWriter(bouncesFile)
+	writer := csv.NewWriter(fileWriter)
+	writer.Comma = ';'
+	safeWriter := gocsv.NewSafeCSVWriter(writer)
 
 	// get token of account to which the oauth app belongs to
 	ctx := context.Background()
@@ -46,7 +64,7 @@ func main() {
 			HandleError(httperr)
 		}
 		if resp.StatusCode() == 200 {
-			token = string(resp.Body())
+			token = strings.Trim(string(resp.Body()), "\"")
 			log.Infof("Got token for client ID %s", *clientID)
 		} else {
 			log.Debugf("Impersonating response body: %s", string(resp.Body()))
@@ -56,14 +74,16 @@ func main() {
 
 	// now get all bounces
 	page := 0
-	var bounceList []*Bounce
+	cnt := 0
 	for {
 		gotBounces, httpErr := GetBounces(page, token)
-		bounceList = append(bounceList, gotBounces...)
 
 		if httpErr != nil {
 			HandleError(httpErr)
 		}
+
+		gocsv.MarshalCSV(gotBounces, safeWriter)
+		cnt += len(gotBounces)
 
 		// if we've 500 bounces there are maybe more, so head over to the next page
 		if len(gotBounces) == 500 {
@@ -74,27 +94,5 @@ func main() {
 		}
 	}
 
-	// Then write it to a semicolon separated file because it can contain a comma in bounce message
-	fileName := "bounces"
-	if *clientID != "none" {
-		fileName += "_" + *clientID
-	}
-
-	bouncesFile, openErr := os.OpenFile(fileName+".csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
-	if openErr != nil {
-		HandleError(openErr)
-	}
-	defer bouncesFile.Close()
-
-	gocsv.SetCSVWriter(func(out io.Writer) *gocsv.SafeCSVWriter {
-		writer := csv.NewWriter(out)
-		writer.Comma = ';'
-		return gocsv.NewSafeCSVWriter(writer)
-	})
-
-	csvMarshalErr := gocsv.MarshalFile(bounceList, bouncesFile)
-	if csvMarshalErr != nil {
-		HandleError(csvMarshalErr)
-	}
-	log.Infof("%d bounces written to CSV", len(bounceList))
+	log.Infof("%d bounces written to CSV", cnt)
 }
