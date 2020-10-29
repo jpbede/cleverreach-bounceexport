@@ -63,4 +63,4 @@ brews:
       bin.install "cleverreach-bounceexport"
 
     test: |
-      system "#{bin}/cleverreach-bounceexport --version"
+      system "#{bin}/cleverreach-bounceexport"
