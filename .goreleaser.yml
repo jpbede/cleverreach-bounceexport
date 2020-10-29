@@ -47,7 +47,7 @@ brews:
 
     homepage: "https://github.com/jpbede/cleverreach-bounceexport"
 
-    description: "Little go tool to export bounces as CSV from CleverReach"
+    description: "Tool to export bounces as CSV from CleverReach"
 
     # Setting this will prevent goreleaser to actually try to commit the updated
     # formula - instead, the formula file will be stored on the dist folder only,
