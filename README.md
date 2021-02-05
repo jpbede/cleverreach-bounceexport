@@ -3,6 +3,17 @@
 Little go tool to export bounces as CSV from CleverReach.
 It uses the CleverReach REST API v3.
 
+# Installing
+
+### Binaries
+You will find pre-compiled for the most common OS under https://github.com/jpbede/cleverreach-bounceexport/releases 
+
+### macOS
+Simply use `homebrew` (https://brew.sh/)
+
+To install `cleverreach-bounceexport` use following command `brew install jpbede/tap/cleverreach-bounceexport`
+
+
 # How to use
 Create a OAuth app at https://eu.cleverreach.com/admin/account_rest.php
 
