@@ -6,5 +6,5 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/gocarina/gocsv v0.0.0-20200330101823-46266ca37bd3
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/oauth2 v0.9.0
+	golang.org/x/oauth2 v0.10.0
 )
