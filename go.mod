@@ -3,7 +3,7 @@ module github.com/jpbede/cleverreach-bounceexport
 go 1.14
 
 require (
-	github.com/go-resty/resty/v2 v2.13.1
+	github.com/go-resty/resty/v2 v2.14.0
 	github.com/gocarina/gocsv v0.0.0-20200330101823-46266ca37bd3
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
